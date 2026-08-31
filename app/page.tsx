@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDecisionRoom } from "@/hooks/use-decision-room";
 import { makeReport, useWebMCP } from "@/hooks/use-webmcp";
 import type { CriterionType } from "@/lib/types";
@@ -13,13 +13,15 @@ export default function Home() {
   const [modal, setModal] = useState<"option" | "criterion" | "report" | null>(null);
   const [scenarioCriterion, setScenarioCriterion] = useState("security");
   const [scenarioWeight, setScenarioWeight] = useState(40);
+  const [webMCPAvailable, setWebMCPAvailable] = useState(false);
+  useEffect(() => { setWebMCPAvailable(Boolean(document.modelContext)); }, []);
   const report = useMemo(() => makeReport(room.decision, room.scenarioResult), [room.decision, room.scenarioResult]);
   const selected = room.decision.options.find((o) => o.id === room.decision.selectedOptionId);
 
   return <main>
     <header className="topbar">
       <div className="brand"><span className="brandmark">DR</span><div><strong>Decision Room</strong><small>AI-assisted decisions, with humans in control</small></div></div>
-      <div className="header-actions"><span className="webmcp"><i /> WebMCP ready</span><button className="ghost" onClick={() => setModal("report")}>Export report</button><button className="primary" onClick={() => room.saveSelection()}>Save decision</button></div>
+      <div className="header-actions"><span className="webmcp" aria-live="polite"><i /> WebMCP {webMCPAvailable ? "connected" : "unavailable"}</span><button className="ghost" onClick={() => setModal("report")}>Export report</button><button className="primary" onClick={() => room.saveSelection()}>Save decision</button></div>
     </header>
 
     <section className="hero">
