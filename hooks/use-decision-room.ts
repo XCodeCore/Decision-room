@@ -55,7 +55,22 @@ export function useDecisionRoom() {
     updateDecision((d) => ({ ...d, selectedOptionId: id })); const name = stateRef.current.options.find((o) => o.id === id)?.name;
     log(`${actor === "agent" ? "Agent saved" : "Saved"} ${name} as the final decision`, actor);
   }, [log, updateDecision]);
-  const reset = useCallback(() => { const fresh = demoDecision(); setDecision(fresh); stateRef.current = fresh; setScenarioResult(null); scenarioRef.current = null; setActivities([]); log("Reset fictional apartment demo"); }, [log]);
+   const startNewDecision = useCallback((title: string) => {
+    const fresh: Decision = {
+      id: `decision-${Date.now()}`,
+      title: title.trim(),
+      criteria: [],
+      options: [],
+      updatedAt: new Date().toISOString(),
+    };
+    setDecision(fresh);
+    stateRef.current = fresh;
+    setScenarioResult(null);
+    scenarioRef.current = null;
+    setActivities([]);
+    log(`Started new decision: ${fresh.title}`);
+  }, [log]);
+ const reset = useCallback(() => { const fresh = demoDecision(); setDecision(fresh); stateRef.current = fresh; setScenarioResult(null); scenarioRef.current = null; setActivities([]); log("Reset fictional apartment demo"); }, [log]);
 
-  return { decision, stateRef, scenarioRef, analysis: analyzeDecision(decision), activities, scenarioResult, log, setWeight, addOption, addCriterion, scenario, applyCurrentScenario, saveSelection, reset };
+  return { decision, startNewDecision, stateRef, scenarioRef, analysis: analyzeDecision(decision), activities, scenarioResult, log, setWeight, addOption, addCriterion, scenario, applyCurrentScenario, saveSelection, reset };
 }
