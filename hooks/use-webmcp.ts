@@ -22,7 +22,7 @@ export function useWebMCP(room: Actions) {
       { name: "get_decision", title: "Get decision", description: "Use first to inspect the live decision, options, criteria, weights, selected option, and ranking before making recommendations.", inputSchema: schema(), annotations: { readOnlyHint: true }, execute: () => { agentLog("Agent retrieved current decision", "agent"); return serialize(current()); } },
       { name: "add_option", title: "Add option", description: "Add a candidate option to the current decision. Supply a numeric value for every criterion ID returned by get_decision.", inputSchema: schema({ name: { type: "string", minLength: 1 }, values: { type: "object", additionalProperties: { type: "number" }, minProperties: 1 } }, ["name", "values"]), execute: ({ name, values }) => { const option: Option = { id: `option-${Date.now()}`, name, values }; room.addOption(option, "agent"); return { added: option, ...serialize(current()) }; } },
       { name: "add_criterion", title: "Add criterion", description: "Add a reusable evaluation criterion when an important factor is missing. Existing options receive the supplied initial values or zero.", inputSchema: schema({ name: { type: "string", minLength: 1 }, weight: { type: "number", minimum: 0, maximum: 100 }, type: { type: "string", enum: ["benefit", "cost"] }, unit: { type: "string" }, values: { type: "object", additionalProperties: { type: "number" } } }, ["name", "weight", "type"]), execute: ({ name, weight, type, unit, values = {} }) => { const criterion: Criterion = { id: `criterion-${Date.now()}`, name, weight, type, unit }; room.addCriterion(criterion, "agent", values); return { added: criterion, ...serialize(current()) }; } },
-      { name: "populate_decision", title: "Populate decision", description: "Populate the current decision in one atomic operation with multiple criteria and multiple real options. Use this after researching candidates so the user does not need repeated add_criterion and add_option calls.", inputSchema: schema({
+      { name: "populate_decision", title: "Populate decision", description: "Populate the current decision in one atomic operation with multiple researched criteria and real options. Provide option values in the same order as the criteria. Decision Room generates all internal IDs automatically.", inputSchema: schema({
         criteria: {
           type: "array",
           minItems: 1,
@@ -30,13 +30,12 @@ export function useWebMCP(room: Actions) {
             type: "object",
             additionalProperties: false,
             properties: {
-              id: { type: "string", minLength: 1 },
               name: { type: "string", minLength: 1 },
               weight: { type: "number", minimum: 0, maximum: 100 },
               type: { type: "string", enum: ["benefit", "cost"] },
               unit: { type: "string" }
             },
-            required: ["id", "name", "weight", "type"]
+            required: ["name", "weight", "type"]
           }
         },
         options: {
@@ -46,18 +45,42 @@ export function useWebMCP(room: Actions) {
             type: "object",
             additionalProperties: false,
             properties: {
-              id: { type: "string", minLength: 1 },
               name: { type: "string", minLength: 1 },
               values: {
-                type: "object",
-                additionalProperties: { type: "number" }
+                type: "array",
+                minItems: 1,
+                items: { type: "number" }
               }
             },
-            required: ["id", "name", "values"]
+            required: ["name", "values"]
           }
         }
       }, ["criteria", "options"]), execute: ({ criteria, options }) => {
-        room.populateDecision(criteria as Criterion[], options as Option[], "agent");
+        const stamp = Date.now();
+
+        const builtCriteria: Criterion[] = criteria.map((criterion: Omit<Criterion, "id">, index: number) => ({
+          ...criterion,
+          id: `criterion-${stamp}-${index}`
+        }));
+
+        const builtOptions: Option[] = options.map((option: { name: string; values: number[] }, optionIndex: number) => {
+          if (option.values.length !== builtCriteria.length) {
+            throw new Error(`Option "${option.name}" has ${option.values.length} values but ${builtCriteria.length} criteria were provided.`);
+          }
+
+          return {
+            id: `option-${stamp}-${optionIndex}`,
+            name: option.name,
+            values: Object.fromEntries(
+              builtCriteria.map((criterion, criterionIndex) => [
+                criterion.id,
+                option.values[criterionIndex]
+              ])
+            )
+          };
+        });
+
+        room.populateDecision(builtCriteria, builtOptions, "agent");
         return serialize(current());
       } },
       { name: "set_criterion_weight", title: "Set criterion weight", description: "Change one criterion's base importance and immediately recalculate the visible ranking. Use run_scenario instead if the change must remain temporary.", inputSchema: schema({ criterionId: { type: "string", minLength: 1 }, weight: { type: "number", minimum: 0, maximum: 100 } }, ["criterionId", "weight"]), execute: ({ criterionId, weight }) => { room.setWeight(criterionId, weight, "agent"); return serialize(current()); } },
