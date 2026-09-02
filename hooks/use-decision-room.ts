@@ -41,6 +41,12 @@ export function useDecisionRoom() {
     updateDecision((d) => ({ ...d, criteria: [...d.criteria, criterion], options: d.options.map((o) => ({ ...o, values: { ...o.values, [criterion.id]: initialValues[o.id] ?? 0 } })) }));
     log(`${actor === "agent" ? "Agent added" : "Added"} criterion ${criterion.name}`, actor);
   }, [log, updateDecision]);
+  const populateDecision = useCallback((criteria: Criterion[], options: Option[], actor: Activity["actor"] = "agent") => {
+    updateDecision((d) => ({ ...d, criteria, options, selectedOptionId: undefined }));
+    setScenarioResult(null);
+    scenarioRef.current = null;
+    log(`${actor === "agent" ? "Agent populated" : "Populated"} decision with ${criteria.length} criteria and ${options.length} options`, actor);
+  }, [log, updateDecision]);
   const scenario = useCallback((value: Scenario, actor: Activity["actor"] = "human") => {
     const result = runScenario(stateRef.current, value); setScenarioResult(result); scenarioRef.current = result;
     log(`${actor === "agent" ? "Agent ran" : "Ran"} “${value.name}” scenario${result.base.winner?.id !== result.result.winner?.id ? ` — recommendation changed from ${result.base.winner?.name} to ${result.result.winner?.name}` : " — recommendation held"}`, actor);
@@ -73,5 +79,5 @@ export function useDecisionRoom() {
   }, [log]);
  const reset = useCallback(() => { const fresh = demoDecision(); setDecision(fresh); stateRef.current = fresh; setScenarioResult(null); scenarioRef.current = null; setActivities([]); log("Reset fictional apartment demo"); }, [log]);
 
-  return { decision, startNewDecision, stateRef, scenarioRef, analysis: analyzeDecision(decision), activities, scenarioResult, log, setWeight, addOption, addCriterion, scenario, applyCurrentScenario, saveSelection, reset };
+  return { decision, startNewDecision, stateRef, scenarioRef, analysis: analyzeDecision(decision), activities, scenarioResult, log, setWeight, addOption, addCriterion, populateDecision, scenario, applyCurrentScenario, saveSelection, reset };
 }

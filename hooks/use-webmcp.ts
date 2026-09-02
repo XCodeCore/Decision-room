@@ -22,6 +22,44 @@ export function useWebMCP(room: Actions) {
       { name: "get_decision", title: "Get decision", description: "Use first to inspect the live decision, options, criteria, weights, selected option, and ranking before making recommendations.", inputSchema: schema(), annotations: { readOnlyHint: true }, execute: () => { agentLog("Agent retrieved current decision", "agent"); return serialize(current()); } },
       { name: "add_option", title: "Add option", description: "Add a candidate option to the current decision. Supply a numeric value for every criterion ID returned by get_decision.", inputSchema: schema({ name: { type: "string", minLength: 1 }, values: { type: "object", additionalProperties: { type: "number" }, minProperties: 1 } }, ["name", "values"]), execute: ({ name, values }) => { const option: Option = { id: `option-${Date.now()}`, name, values }; room.addOption(option, "agent"); return { added: option, ...serialize(current()) }; } },
       { name: "add_criterion", title: "Add criterion", description: "Add a reusable evaluation criterion when an important factor is missing. Existing options receive the supplied initial values or zero.", inputSchema: schema({ name: { type: "string", minLength: 1 }, weight: { type: "number", minimum: 0, maximum: 100 }, type: { type: "string", enum: ["benefit", "cost"] }, unit: { type: "string" }, values: { type: "object", additionalProperties: { type: "number" } } }, ["name", "weight", "type"]), execute: ({ name, weight, type, unit, values = {} }) => { const criterion: Criterion = { id: `criterion-${Date.now()}`, name, weight, type, unit }; room.addCriterion(criterion, "agent", values); return { added: criterion, ...serialize(current()) }; } },
+      { name: "populate_decision", title: "Populate decision", description: "Populate the current decision in one atomic operation with multiple criteria and multiple real options. Use this after researching candidates so the user does not need repeated add_criterion and add_option calls.", inputSchema: schema({
+        criteria: {
+          type: "array",
+          minItems: 1,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              id: { type: "string", minLength: 1 },
+              name: { type: "string", minLength: 1 },
+              weight: { type: "number", minimum: 0, maximum: 100 },
+              type: { type: "string", enum: ["benefit", "cost"] },
+              unit: { type: "string" }
+            },
+            required: ["id", "name", "weight", "type"]
+          }
+        },
+        options: {
+          type: "array",
+          minItems: 1,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              id: { type: "string", minLength: 1 },
+              name: { type: "string", minLength: 1 },
+              values: {
+                type: "object",
+                additionalProperties: { type: "number" }
+              }
+            },
+            required: ["id", "name", "values"]
+          }
+        }
+      }, ["criteria", "options"]), execute: ({ criteria, options }) => {
+        room.populateDecision(criteria as Criterion[], options as Option[], "agent");
+        return serialize(current());
+      } },
       { name: "set_criterion_weight", title: "Set criterion weight", description: "Change one criterion's base importance and immediately recalculate the visible ranking. Use run_scenario instead if the change must remain temporary.", inputSchema: schema({ criterionId: { type: "string", minLength: 1 }, weight: { type: "number", minimum: 0, maximum: 100 } }, ["criterionId", "weight"]), execute: ({ criterionId, weight }) => { room.setWeight(criterionId, weight, "agent"); return serialize(current()); } },
       { name: "compare_options", title: "Compare options", description: "Calculate and explain the current normalized weighted ranking, including per-criterion contributions and trade-offs.", inputSchema: schema(), annotations: { readOnlyHint: true }, execute: () => { const result = serialize(current()); agentLog(`Agent recalculated ${current().options.length} option scores`, "agent"); return result; } },
       { name: "run_scenario", title: "Run what-if scenario", description: "Temporarily test changed criterion weights or per-option value adjustments without overwriting the base decision.", inputSchema: schema({ name: { type: "string", minLength: 1 }, changes: { type: "array", minItems: 1, items: { type: "object", additionalProperties: false, properties: { criterionId: { type: "string" }, weight: { type: "number", minimum: 0, maximum: 100 }, valueAdjustments: { type: "object", additionalProperties: { type: "number" } } }, required: ["criterionId"] } } }, ["name", "changes"]), execute: ({ name, changes }) => room.scenario({ id: `scenario-${Date.now()}`, name, changes, createdAt: new Date().toISOString() }, "agent") },
