@@ -55,10 +55,11 @@ export function useDecisionRoom() {
     updateDecision((d) => ({ ...d, selectedOptionId: id })); const name = stateRef.current.options.find((o) => o.id === id)?.name;
     log(`${actor === "agent" ? "Agent saved" : "Saved"} ${name} as the final decision`, actor);
   }, [log, updateDecision]);
-   const startNewDecision = useCallback((title: string) => {
+   const startNewDecision = useCallback((title: string, description = "") => {
     const fresh: Decision = {
       id: `decision-${Date.now()}`,
       title: title.trim(),
+      description: description.trim(),
       criteria: [],
       options: [],
       updatedAt: new Date().toISOString(),

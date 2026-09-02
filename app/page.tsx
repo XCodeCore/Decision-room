@@ -26,9 +26,10 @@ export default function Home() {
     </header>
 
     <section className="hero">
-      <div><div className="eyebrow"><span>LIVE WORKSPACE</span><span>{room.decision.id === "apartment-demo" ? "APARTMENT SEARCH" : "CUSTOM DECISION"}</span></div><h1>{room.decision.title}</h1><p>Compare what matters, test your assumptions, and make a choice you can explain.</p></div>
-      <div className="hero-status"><span>3 options evaluated</span><strong>{selected ? `Selected: ${selected.name}` : "Decision in progress"}</strong></div>
+     <div><div className="eyebrow"><span>LIVE WORKSPACE</span><span>{room.decision.id === "apartment-demo" ? "APARTMENT SEARCH" : "CUSTOM DECISION"}</span></div><h1>{room.decision.title}</h1><p>Compare what matters, test your assumptions, and make a choice you can explain.</p></div>
+     <div className="hero-status"><span>{room.decision.options.length} options evaluated</span><strong>{selected ? `Selected: ${selected.name}` : "Decision in progress"}</strong></div>
     </section>
+    {room.decision.description && <div className="decision-brief"><strong>Decision brief</strong><p>{room.decision.description}</p></div>}     
 
     {room.decision.id === "apartment-demo" && <div className="notice">ⓘ All apartment names and values in this demonstration are fictional sample data.</div>}
 
@@ -79,6 +80,7 @@ function OptionModal({ room, close }: { room: ReturnType<typeof useDecisionRoom>
 
 function NewDecisionModal({ room, close }: { room: ReturnType<typeof useDecisionRoom>; close: () => void }) {
   const [title, setTitle] = useState("");
+const [description, setDescription] = useState("");
 
   return (
     <div className="modal-backdrop">
@@ -87,13 +89,13 @@ function NewDecisionModal({ room, close }: { room: ReturnType<typeof useDecision
         onSubmit={(e) => {
           e.preventDefault();
           if (!title.trim()) return;
-          room.startNewDecision(title);
+          room.startNewDecision(title, description);
           close();
         }}
       >
         <div className="eyebrow">NEW WORKSPACE</div>
         <h2>Start a new decision</h2>
-        <p>Create a blank decision room for anything you want to compare.</p>
+        <p>Describe your decision, priorities, and constraints. Decision Room will help you structure and compare your choices.</p>
 
         <label>
           Decision title
@@ -104,6 +106,16 @@ function NewDecisionModal({ room, close }: { room: ReturnType<typeof useDecision
             placeholder="e.g. Choose My Next Laptop"
           />
         </label>
+<label>
+  What are you trying to decide?
+  <textarea
+    required
+    value={description}
+    onChange={(e) => setDescription(e.target.value)}
+    placeholder="e.g. I need a laptop for cybersecurity and programming. My budget is ₦800,000 and performance matters most."
+    rows={4}
+  />
+</label>
 
         <div className="modal-actions">
           <button type="button" className="ghost" onClick={close}>
