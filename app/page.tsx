@@ -31,7 +31,7 @@ export default function Home() {
     </section>
     {room.decision.description && <div className="decision-brief"><strong>Decision brief</strong><p>{room.decision.description}</p></div>}     
 
-    {room.decision.id === "apartment-demo" && <div className="notice">ⓘ All apartment names and values in this demonstration are fictional sample data.</div>}
+    {room.decision.id === "apartment-demo" && <div className="notice">ⓘ Apartment names and values in this demo are fictional sample data.</div>}
 
     <section className="agent-guide">
       <div>
