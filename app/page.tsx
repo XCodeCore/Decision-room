@@ -33,6 +33,18 @@ export default function Home() {
 
     {room.decision.id === "apartment-demo" && <div className="notice">ⓘ All apartment names and values in this demonstration are fictional sample data.</div>}
 
+    <section className="agent-guide">
+      <div>
+        <span className="kicker">WEBMCP QUICK START</span>
+        <strong>Use Decision Room with an AI agent</strong>
+        <p>Open this page in a WebMCP-enabled browser, describe your decision, then ask the agent to research real options and build the comparison.</p>
+      </div>
+      <div className="agent-prompt">
+        <span>TRY THIS PROMPT</span>
+        <code>Read my decision brief, research suitable real options, populate Decision Room, and compare them.</code>
+      </div>
+    </section>
+
     <div className="dashboard">
       <div className="main-column">
         <section className="winner-card">
@@ -57,7 +69,7 @@ export default function Home() {
       <aside>
         <section className="panel priorities"><div className="panel-heading"><div><span className="kicker">CRITERIA</span><h2>Priorities</h2></div><button className="icon-button" aria-label="Add criterion" onClick={() => setModal("criterion")}>＋</button></div><p>Weights are normalized automatically.</p>
           {room.decision.criteria.map((c) => <label className="weight" key={c.id}><span><b>{c.name}</b><i className={c.type}>{c.type === "benefit" ? "↑ benefit" : "↓ cost"}</i></span><span><input aria-label={`${c.name} weight`} type="range" min="0" max="50" value={c.weight} onChange={(e) => room.setWeight(c.id, +e.target.value)} /><strong>{c.weight}%</strong></span></label>)}
-          <button className="reset" onClick={room.reset}>↻ Reset demo</button>
+          <button className="reset" onClick={room.reset}>↻ {room.decision.id === "apartment-demo" ? "Reset demo" : "Load demo"}</button>
         </section>
         <section className="panel activity"><div className="activity-head"><div><span className="live-dot" /><div><span className="kicker">LIVE</span><h2>Agent Activity</h2></div></div><span>{room.activities.filter(a => a.actor === "agent").length} calls</span></div>
           <div className="activity-list">{room.activities.length ? room.activities.map((a) => <div key={a.id} className={a.actor}><span>{a.actor === "agent" ? "✦" : "●"}</span><div><p>{a.message}</p><time>{new Date(a.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })} · {a.actor}</time></div></div>) : <div className="activity-empty"><span>✦</span><p>Waiting for an agent</p><small>WebMCP tool calls will appear here in real time.</small></div>}</div>

@@ -100,5 +100,9 @@ export function makeReport(decision: Decision, scenario: ReturnType<Actions["sce
   const rows = analysis.ranking.map((o) => `| ${o.rank} | ${o.name} | ${o.score.toFixed(1)} |`).join("\n");
   const criteria = decision.criteria.map((c) => `- ${c.name}: ${(weights[c.id] * 100).toFixed(1)}% (${c.type})`).join("\n");
   const scenarioText = scenario ? `${scenario.scenario.name}: ${scenario.base.winner?.name} → ${scenario.result.winner?.name}` : "No temporary scenario is currently open.";
-  return `# Decision Report: ${decision.title}\n\n_Generated ${new Date().toLocaleString()} · Demo values are fictional._\n\n## Recommendation\n\n**${analysis.winner?.name ?? "No winner"}** — ${analysis.explanation}\n\n## Criteria\n\n${criteria}\n\n## Final ranking\n\n| Rank | Option | Score |\n|---:|---|---:|\n${rows}\n\n## Trade-offs\n\nScores use min–max normalization. The recommendation reflects the stated priorities; changing high-weight criteria can change the outcome.\n\n## Scenario analysis\n\n${scenarioText}\n\n## Final selected decision\n\n${selected?.name ?? "Not yet selected"}\n`;
+  const dataNote = decision.id === "apartment-demo"
+    ? "Demo values are fictional."
+    : "External prices and specifications may change; verify time-sensitive data before acting.";
+
+  return `# Decision Report: ${decision.title}\n\n_Generated ${new Date().toLocaleString()} · ${dataNote}_\n\n## Recommendation\n\n**${analysis.winner?.name ?? "No winner"}** — ${analysis.explanation}\n\n## Criteria\n\n${criteria}\n\n## Final ranking\n\n| Rank | Option | Score |\n|---:|---|---:|\n${rows}\n\n## Trade-offs\n\nScores use min–max normalization. The recommendation reflects the stated priorities; changing high-weight criteria can change the outcome.\n\n## Scenario analysis\n\n${scenarioText}\n\n## Final selected decision\n\n${selected?.name ?? "Not yet selected"}\n`;
 }

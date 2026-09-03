@@ -26,13 +26,14 @@ Important decisions are often spread across notes, spreadsheets, and conversatio
 
 WebMCP is a core interaction layer, not a separate demo. The page registers tools once through the current imperative browser API, `document.modelContext.registerTool(...)`, with strict JSON input schemas. Tool handlers use the same shared React actions, decision state, and scoring engine as the human interface. State-changing calls update the visible UI and persist through the normal application state path; genuine tool executions are recorded in Agent Activity.
 
-The application exposes exactly eight tools:
+The application exposes exactly nine tools:
 
 | Tool | Purpose |
 | --- | --- |
 | `get_decision` | Retrieve the live decision, criteria, options, weights, selection, and ranking. |
 | `add_option` | Add a candidate with values for the current criteria. |
 | `add_criterion` | Add a benefit or cost criterion and initial values for existing options. |
+| `populate_decision` | Populate multiple researched criteria and real options in one atomic tool call. |
 | `set_criterion_weight` | Change a base criterion weight and recalculate the visible ranking. |
 | `compare_options` | Return normalized scores, criterion contributions, ranking, and explanation. |
 | `run_scenario` | Test temporary weight or value changes without overwriting the base decision. |
@@ -77,16 +78,19 @@ npm start
 
 1. Open the local app or [live demo](https://decision-room-gray.vercel.app) in a browser build that supports the imperative WebMCP API and provides `document.modelContext` in the page.
 2. Confirm the header says **WebMCP Connected**. If it says **WebMCP Unavailable**, that browser session does not expose the API.
-3. Use the browser's WebMCP-capable agent or inspection tooling to discover the eight registered tools.
-4. Call `get_decision` or `compare_options`, then verify the Agent Activity panel records the real invocation.
-5. Try `set_criterion_weight` or `run_scenario` and confirm the visible ranking or scenario workspace updates.
-6. Finish with `save_decision` and `generate_report` to verify selection and report output.
+3. Use the browser's WebMCP-capable agent or inspection tooling to discover the nine registered tools.
+4. Create a new decision and describe your priorities, constraints, and budget.
+5. Ask the agent: `Read my decision brief, research suitable real options, populate Decision Room, and compare them.`
+6. For multi-option research, the agent can use `populate_decision` once to add the criteria and candidates atomically instead of making many separate writes.
+7. Verify the comparison and Agent Activity panel update from the real tool calls.
+8. Try `run_scenario` to test a temporary priority change without overwriting the base decision.
+9. Finish with `save_decision` and `generate_report` to verify selection and report output.
 
 WebMCP is an evolving browser capability, so availability depends on the browser build and any required feature configuration. The app does not polyfill or simulate support.
 
 ## Why this is strong for the WebMCP Challenge
 
-- **WebMCP Leverage:** Eight meaningful tools let an agent inspect, modify, compare, simulate, save, and report on the same live state used by the UI.
+- **WebMCP Leverage:** Nine meaningful tools let an agent inspect, modify, compare, simulate, save, and report on the same live state used by the UI.
 - **Execution:** Strict schemas, shared state actions, immutable updates, real activity logging, scenario isolation, persistence, and a production-ready responsive interface create a coherent end-to-end experience.
 - **Potential Impact:** The generic decision engine can support many high-value personal and organizational choices beyond the apartment demonstration.
 - **Creativity & Ambition:** Decision Room makes agent reasoning tangible: judges can watch structured agent actions immediately alter an explainable human-controlled decision workspace.
